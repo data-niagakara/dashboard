@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omset Niagakara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f2f4f1;--panel:#fff;--ink:#17221e;--mute:#5e6b65;--line:#d8ddd8;--accent:#0e6b5c;--accent-ink:#fff;--warn:#b4531f;--chip:#e6eee9}
+  @media (prefers-color-scheme:dark){:root{--bg:#121916;--panel:#1b2420;--ink:#e9efeb;--mute:#9aa8a1;--line:#2c3832;--accent:#4cc3ab;--accent-ink:#0b1713;--warn:#e68a55;--chip:#24312b}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 Manrope,system-ui,sans-serif}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 48px}
+  h1{font-size:22px;font-weight:800;margin:0}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:8px}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+  button:disabled{opacity:.45;cursor:default}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .filters label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+  .filters input,.filters select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+  .stats{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .stat span{font-size:12px;color:var(--mute)}
+  .stat b{display:block;font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stat.main b{font-size:34px;color:var(--accent)}
+  .tablebox{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:64vh}
+  table{border-collapse:collapse;width:100%;min-width:980px}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--panel);font-size:12px;color:var(--mute);font-weight:700}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .chip{background:var(--chip);padding:2px 8px;border-radius:99px;font-size:12px}
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--mute)}
+  .pager div{display:flex;gap:8px}
+  .msg{padding:28px;text-align:center;color:var(--mute)}
+  .err{color:var(--warn)}
+  #login{max-width:380px;margin:18vh auto;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:32px}
+  #login p{color:var(--mute)}
+  .hide{display:none!important}
+  @media(max-width:640px){.stats{grid-template-columns:1fr}.stat.main b{font-size:28px}}
+</style>
+</head>
+<body>
+
+<div id="login" class="hide">
+  <h1>Omset Niagakara</h1>
+  <p>Masuk dengan akun Google yang sudah didaftarkan.</p>
+  <button class="primary" id="btnLogin">Masuk dengan Google</button>
+</div>
+
+<div class="wrap hide" id="app">
+  <header>
+    <h1>Omset</h1>
+    <div><span id="who" class="chip"></span> <button id="btnLogout">Keluar</button></div>
+  </header>
+
+  <div class="filters">
+    <label>Dari tanggal <input type="date" id="fFrom"></label>
+    <label>Sampai tanggal <input type="date" id="fTo"></label>
+    <label>Status <select id="fStatus"><option value="">Semua</option></select></label>
+    <label>Adv <select id="fAdv"><option value="">Semua</option></select></label>
+    <label>Nama CS <select id="fCs"><option value="">Semua</option></select></label>
+    <label>Cari order, resi, HP, nama <input type="search" id="fSearch" placeholder="Ketik lalu tunggu"></label>
+  </div>
+
+  <div class="stats">
+    <div class="stat main"><span>Total omset</span><b id="sOmset">-</b></div>
+    <div class="stat"><span>Closing</span><b id="sClosing">-</b></div>
+    <div class="stat"><span>Jumlah order</span><b id="sOrder">-</b></div>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr>
+        <th>Tanggal</th><th>Order</th><th>Customer</th><th>Produk</th><th class="num">Qty</th>
+        <th class="num">Omset</th><th>Status</th><th class="num">Closing</th><th>Adv</th><th>CS</th><th>Status berubah</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <span id="pageInfo"></span>
+    <div><button id="prev">Sebelumnya</button><button id="next">Berikutnya</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ===== ISI DUA BARIS INI =====
+const SUPABASE_URL = 'https://GANTI.supabase.co';
+const SUPABASE_ANON_KEY = 'GANTI_DENGAN_ANON_PUBLIC_KEY';   // anon key (bukan service_role!)
+// =============================
+
+const PAGE = 50;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const rp = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n || 0));
+const num = n => new Intl.NumberFormat('id-ID').format(n || 0);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const tgl = s => s ? s.split('-').reverse().join('/') : '';
+
+let page = 0, total = 0, timer = null, ticket = 0;
+
+function filters() {
+  return {
+    from: $('fFrom').value || null, to: $('fTo').value || null,
+    status: $('fStatus').value || null, adv: $('fAdv').value || null, cs: $('fCs').value || null,
+    search: $('fSearch').value.trim().replace(/[,()%*]/g, ' ').trim() || null
+  };
+}
+
+async function load() {
+  const my = ++ticket, f = filters();
+  $('rows').innerHTML = '<tr><td colspan="11" class="msg">Memuat data...</td></tr>';
+
+  const sumP = sb.rpc('omset_summary', { p_from: f.from, p_to: f.to, p_status: f.status, p_adv: f.adv, p_cs: f.cs, p_search: f.search });
+
+  let q = sb.from('omset').select('*').order('date', { ascending: false }).order('order_number');
+  if (f.from) q = q.gte('date', f.from);
+  if (f.to) q = q.lte('date', f.to);
+  if (f.status) q = q.eq('status', f.status);
+  if (f.adv) q = q.eq('adv', f.adv);
+  if (f.cs) q = q.eq('nama_cs', f.cs);
+  if (f.search) {
+    const s = '%' + f.search + '%';
+    q = q.or(['order_number', 'awb', 'customer_phone', 'customer_name'].map(c => c + '.ilike.' + s).join(','));
+  }
+  q = q.range(page * PAGE, page * PAGE + PAGE - 1);
+
+  const [sum, list] = await Promise.all([sumP, q]);
+  if (my !== ticket) return;                      // ada pencarian yang lebih baru
+  if (sum.error || list.error) {
+    $('rows').innerHTML = '<tr><td colspan="11" class="msg err">Gagal memuat: ' + esc((sum.error || list.error).message) + '</td></tr>';
+    return;
+  }
+  const s = sum.data[0] || {};
+  total = Number(s.total_order || 0);
+  $('sOmset').textContent = rp(s.total_omset);
+  $('sClosing').textContent = num(s.total_closing);
+  $('sOrder').textContent = num(total);
+
+  $('rows').innerHTML = list.data.length ? list.data.map(r => `<tr>
+    <td>${tgl(r.date)}</td><td>${esc(r.order_number)}</td>
+    <td>${esc(r.customer_name)}<br><small>${esc(r.customer_phone)}</small></td>
+    <td>${esc(r.product_name)}</td><td class="num">${num(r.quantity)}</td>
+    <td class="num">${rp(r.omset)}</td><td><span class="chip">${esc(r.status)}</span></td>
+    <td class="num">${num(r.closing)}</td><td>${esc(r.adv)}</td><td>${esc(r.nama_cs)}</td><td>${tgl(r.tanggal_selesai)}</td>
+  </tr>`).join('') : '<tr><td colspan="11" class="msg">Tidak ada data untuk filter ini. Kalau seharusnya ada, cek email Google kamu sudah terdaftar di tabel omset_viewers.</td></tr>';
+
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  $('pageInfo').textContent = 'Halaman ' + (page + 1) + ' dari ' + pages;
+  $('prev').disabled = page === 0;
+  $('next').disabled = page + 1 >= pages;
+}
+
+function reload() { page = 0; load(); }
+
+async function loadOptions() {
+  const { data } = await sb.rpc('omset_options');
+  if (!data) return;
+  [['fStatus', data.status], ['fAdv', data.adv], ['fCs', data.cs]].forEach(([id, arr]) => {
+    $(id).insertAdjacentHTML('beforeend', (arr || []).map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join(''));
+  });
+}
+
+async function start(session) {
+  if (!session) { $('login').classList.remove('hide'); $('app').classList.add('hide'); return; }
+  $('login').classList.add('hide'); $('app').classList.remove('hide');
+  $('who').textContent = session.user.email;
+  const now = new Date();
+  $('fFrom').value = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
+  $('fTo').value = ymd(now);
+  await loadOptions();
+  load();
+}
+
+$('btnLogin').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+$('btnLogout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+['fFrom', 'fTo', 'fStatus', 'fAdv', 'fCs'].forEach(id => $(id).addEventListener('change', reload));
+$('fSearch').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reload, 400); });
+$('prev').onclick = () => { page--; load(); };
+$('next').onclick = () => { page++; load(); };
+
+sb.auth.getSession().then(({ data }) => start(data.session));
+</script>
+</body>
+</html>
